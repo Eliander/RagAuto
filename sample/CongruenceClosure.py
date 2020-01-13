@@ -1,7 +1,6 @@
 import networkx as nx
 
 
-
 class CongruenceClosure:
     def __init__(self):
         self.DAG = nx.Graph()
@@ -32,7 +31,12 @@ class CongruenceClosure:
         node_2.set_ccpar(node_2.get_ccpar() + node_1.get_ccpar())
         node_1.set_ccpar([])
 
-
+    def build_graph(self):
+        # aggiungo tutti i nodi al grafo
+        for element in self.nodes:
+            self.DAG.add_node(element)
+        for element in self.DAG.nodes:
+            print(element)
 
 
 

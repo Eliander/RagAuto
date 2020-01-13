@@ -1,19 +1,22 @@
 from sample.Node import Node
 from sample.CongruenceClosure import CongruenceClosure
 import sample.InputParser as parser
+import networkx as nx
 
 def main():
 
-    parser.theory_of_equality_input_parser("f(a) = f(b), f(f(a)) = f(b), a != b")
+    singletons = parser.extract_terms("f(a, b) = a; f(f(a, b), b) != a")
 
+    nodes = []
+
+    for sin in singletons.values():
+        nodes.append(sin)
     cc = CongruenceClosure()
-    n1 = Node("f", [2], [])
-    n2 = Node("a", [], [1])
-    cc.add_node(n1)
+    for node in nodes:
+        cc.add_node(node)
 
-    cc.add_node(n2)
+    cc.build_graph()
 
-    cc.union(1, 2)
     print(cc)
     print('\n')
     print("hello")

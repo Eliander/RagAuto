@@ -5,16 +5,15 @@ class Node:
 
     id_value = 0
 
-    def __init__(self, fn, args, ccpar):
-        #increase the id
-        self.id = self.get_new_id()
-        #instance the attributes
+    def __init__(self, fn, id):
+        self.id = id
+        # instance the attributes
         self.fn = fn
-        self.args = args
+        self.args = set()
+        self.ccpar = set()
         self.find = self.id
-        self.ccpar = ccpar
 
-    #getter & setter
+    # getter & setter
     def get_id(self):
         return self.id
 
@@ -36,13 +35,11 @@ class Node:
     def set_ccpar(self, new_ccpar):
         self.ccpar = new_ccpar
 
-    def __str__(self):
-        return "id: {0}; \nfn: {1}; \nargs: {2}; \nccpar: {3}".format(self.id, self.fn, self.args, self.ccpar)
+    def set_args(self, new_args):
+        self.args = new_args
 
-    #get unique id
-    def get_new_id(self):
-        type(self).id_value += 1
-        return type(self).id_value
+    def __str__(self):
+        return "id: {0}; \nfn: {1}; \nargs: {2}; \nccpar: {3} \n\n".format(self.id, self.fn, self.args, self.ccpar)
 
     #add the created node at the main list of nodes
 
