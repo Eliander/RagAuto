@@ -1,4 +1,4 @@
-from sample.CongruenceClosure import CongruenceClosure as cc
+from sample.Graph import Graph as cc
 from sample import Main
 
 class Node:
@@ -9,6 +9,7 @@ class Node:
         self.id = id
         # instance the attributes
         self.fn = fn
+        self.sym = fn[0]
         self.args = set()
         self.ccpar = set()
         self.find = self.id
@@ -19,6 +20,9 @@ class Node:
 
     def get_fn(self):
         return self.fn
+
+    def get_sym(self):
+        return self.sym
 
     def get_args(self):
         return self.args
@@ -39,7 +43,7 @@ class Node:
         self.args = new_args
 
     def __str__(self):
-        return "id: {0}; \nfn: {1}; \nargs: {2}; \nccpar: {3} \n\n".format(self.id, self.fn, self.args, self.ccpar)
+        return "id: {0}; \nfn: {1} ({2}); \nargs: {3}; \nccpar: {4}; \nfind: {5}\n\n".format(self.id, self.fn, self.sym, self.args, self.ccpar, self.find)
 
     #add the created node at the main list of nodes
 

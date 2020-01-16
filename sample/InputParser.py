@@ -1,10 +1,10 @@
 '''
 input style - theory of equality: f(a) = f(b), f(f(a)) = f(b), a != b, f(f(f(a))) != a
 '''
-from sample.CongruenceClosure import CongruenceClosure
+from sample.Graph import Graph
 from sample.Node import Node
 
-index = 1
+index = 0
 
 
 def save_subterm(last_open, last_close, text):
@@ -57,8 +57,8 @@ def extract_terms(text):
     for el in to_add:
         index = get_index()
         sf[index] = Node(el, index)
-    populate_ccpar(sf)
-    return sf
+    fn_to_index = populate_ccpar(sf)
+    return sf, fn_to_index
 
 
 def get_subterms(term, arr):
@@ -74,6 +74,7 @@ def get_subterms(term, arr):
     else:
         arr.add(term.replace(')', ''))
         return arr
+
 
 def get_index():
     global index
@@ -119,6 +120,7 @@ def distance_one(subterm, term):
                 return True
     return False
 
+
 def main():
 
     singletons = extract_terms("f(g(h(a, w(b)),b)); g(f(a)); g(f(a)); f(h(g(a, b), d), l(a, c))")
@@ -126,11 +128,11 @@ def main():
 
     for sin in singletons.values():
         nodes.append(sin)
-    cc = CongruenceClosure()
+    cc = Graph()
     for node in nodes:
         cc.add_node(node)
     print(cc)
-    #print(extract_terms("f(a);f(f(a));f(a, b); f(f(a), w(b))"))
+    # print(extract_terms("f(a);f(f(a));f(a, b); f(f(a), w(b))"))
 
 
 if __name__ == "__main__":
