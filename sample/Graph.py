@@ -46,6 +46,9 @@ class Graph:
                 if self.find(list_args1[i]) != self.find(list_args2[i]):
                     print('F \n')
                     return False
+                elif self.find(list_args1[i]) != self.find(list_args2[i]) and list_args1[i].get_sym == 'cons':
+                    print('F by axiom !atom \n')
+                    return False
             print('T \n')
             return True
         print('F \n')
@@ -71,6 +74,7 @@ class Graph:
         for t in self.not_in_same_set:
             id_1 = self.DAG[t[0]].get_id()
             id_2 = self.DAG[t[1]].get_id()
+            # fn_1 = self.DAG[id_1].get_fn()   ---  and fn_1 == 'cons'
             if self.find(id_1) == self.find(id_2):
                 print('Violazione clausola: {0} != {1} '.format(self.DAG[id_1].get_fn(), self.DAG[id_2].get_fn()))
                 return True
@@ -82,6 +86,7 @@ class Graph:
             self.DAG[element] = nodes.get(element)
 
     def congruence_closure(self, formula):
+        # NB: ricordati che bisogna implementare la merge su f, car, cdr
         equals = []
         not_equals = []
         split = formula.split(';')
@@ -97,15 +102,15 @@ class Graph:
             self.not_in_same_set.append((self.index_map[neq[0]], self.index_map[neq[1]]))
 
         for equation in equals:
-            split = equation.split('=')
-            print('{0} = {1}'.format(split[0], split[1]))
-            self.merge(self.index_map[split[0]], self.index_map[split[1]])
+            split_eq = equation.split('=')
+            print('{0} = {1}'.format(split_eq[0], split_eq[1]))
+            self.merge(self.index_map[split_eq[0]], self.index_map[split_eq[1]])
 
         print('Soddisfacibile')
 
     def __str__(self):
         for n in self.DAG:
-            print(n)
+            print(self.DAG[n])
         return ""
 
 

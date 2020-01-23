@@ -5,6 +5,7 @@ from sample.Graph import Graph
 from sample.Node import Node
 
 index = 0
+term__array = ['car', 'cdr', 'cons', 'atom', '!atom']
 
 
 def save_subterm(last_open, last_close, text):
@@ -23,7 +24,13 @@ def have_subterms(text, sf):
             open.append(i)
         elif text[i] == ')':
             close.append(i)
-            subterm = save_subterm(open[-1], close[-1]+1, text)
+            subterm = ''
+            for el in term__array:
+                if el in text:
+                    subterm = save_subterm(1, close[-1]+1, text)
+                    break
+            if subterm == '':
+                subterm = save_subterm(open[-1], close[-1]+1, text)
             ispresent = False
             for j in sf.values():
                 if j.get_fn() == subterm:
@@ -36,17 +43,40 @@ def have_subterms(text, sf):
             close.remove(close[-1])
     return map
 
-
+'''
+Metodo che estrae i termini di una formula:
+   - car(x) = car(y); cdr(x) = cdr(y); f(x) = f(y); !atom(x); !atom(y)
+        car(x), car(y), cdr(x), cdr(y), f(x), f(y), cons(u1, v1), cons(u2, v2), x, y
+'''
 def extract_terms(text):
     # sanitize string
     text = text.strip()
-    # replace != with ;
+    text = text.replace(' ', '')
+    # copia della stringa da ritornare: avra' i termini !atom cambiati
+    copy_of_text = text
+    # replace di != e = con ;
     text = text.replace('!=', ';')
     text = text.replace('=', ';')
-    # split at the dot comma
+    # split al ;
     equations = text.split(';')
     sf = {}
+    # conto gli elementi per ciclare
+    length = len(equations)
+    # sostituisco i !atom
+    for i in range(0, length):
+        if "!atom" in equations[i]:
+            # estraggo la variabile
+            var = equations[i][equations[i].index('(')+1:equations[i].index(')')]
+            new_eq = '{0} = cons({1}, {2})'.format(var, var+'u', var+'v')
+            # rimuovo il vecchio elemento e aggiungo i due nuovi
+            equations[i] = 'cons({0}, {1})'.format(var+'u', var+'v')
+            equations.append(var)
+            equations[i] = equations[i].replace('!atom({0})'.format(var), new_eq)
+            # sostituisco anche nella string di ritorno con la formula completa
+            copy_of_text = copy_of_text.replace('!atom({0})'.format(var), new_eq)
+    # splitto anche i cons
     for eq in equations:
+        # sostituisco !atom
         map = have_subterms(eq, sf);
         sf = merge_dict(sf, map)
     tmp = {}
@@ -58,8 +88,28 @@ def extract_terms(text):
         index = get_index()
         sf[index] = Node(el, index)
     fn_to_index = populate_ccpar(sf)
-    return sf, fn_to_index
+    # per ogni nodo cons, aggiungo un car ed un cdr e inserisco i relativi ccpar
+    var = tmp.values()
+    for term in var:
+        if 'cons' in term.get_fn():
+            car, cdr = build_car_cdr_for_cons(term);
+            sf[car.id] = car;
+            sf[cdr.id] = cdr;
+            # metto nei ccpar di cons il car e il cdr appena creati
+            sf[term.id].ccpar.add(car.id)
+            sf[term.id].ccpar.add(cdr.id)
+    return sf, fn_to_index, copy_of_text
 
+def build_car_cdr_for_cons(term):
+    nterm = term.fn[term.fn.index('(')+1: term.fn.index(')')]
+    split = nterm.split(',')
+    car = Node('car({0})'.format(split[0]), get_index())
+    cdr = Node('cdr({0})'.format(split[1]), get_index())
+    car.args.add(term.id)
+    cdr.args.add(term.id)
+    car.find = term.id
+    cdr.find = term.id
+    return car, cdr
 
 def get_subterms(term, arr):
     if '(' in term:
@@ -107,7 +157,8 @@ def distance_one(subterm, term):
     comma_index = -1
     if subterm.get_fn() in copy:
         counter = 0
-        if subterm.get_fn() != copy:
+        if subterm.get_fn() != copy and \
+                '(' in copy and ')' in copy: # funzione
             for j in range(0, len(copy)):
                 if copy[j] == '(':
                     counter += 1

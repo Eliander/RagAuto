@@ -9,7 +9,7 @@ class Node:
         self.id = id
         # instance the attributes
         self.fn = fn
-        self.sym = fn[0]
+        self.sym = self.setSym()
         self.args = set()
         self.ccpar = set()
         self.find = self.id
@@ -41,6 +41,13 @@ class Node:
 
     def set_args(self, new_args):
         self.args = new_args
+
+    def setSym(self):
+        if '(' in self.fn:
+            sym = self.fn[:self.fn.index('(')]
+        else:
+            sym = self.fn
+        return sym
 
     def __str__(self):
         return "id: {0}; \nfn: {1} ({2}); \nargs: {3}; \nccpar: {4}; \nfind: {5}\n\n".format(self.id, self.fn, self.sym, self.args, self.ccpar, self.find)
