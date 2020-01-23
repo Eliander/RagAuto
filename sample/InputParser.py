@@ -5,12 +5,15 @@ from sample.Graph import Graph
 from sample.Node import Node
 
 index = 0
-term__array = ['car', 'cdr', 'cons', 'atom', '!atom']
+term_array = ['car', 'cdr', 'cons', 'atom', '!atom']
 
 
-def save_subterm(last_open, last_close, text):
+def save_subterm(open, close, text):
     # estraggo il sottotermine
-    return text[last_open - 1 : last_close]
+    if len(open) > 1:
+        return text[open[-2] + 1 : close[-1]+1]
+    else:
+        return text[:close[-1]+1]
 
 
 def have_subterms(text, sf):
@@ -25,12 +28,12 @@ def have_subterms(text, sf):
         elif text[i] == ')':
             close.append(i)
             subterm = ''
-            for el in term__array:
-                if el in text:
-                    subterm = save_subterm(1, close[-1]+1, text)
+            for el in term_array:
+                if el in text[open[-1]+1: close[-1]]:
+                    subterm = save_subterm([1], close, text)
                     break
             if subterm == '':
-                subterm = save_subterm(open[-1], close[-1]+1, text)
+                subterm = save_subterm(open, close, text)
             ispresent = False
             for j in sf.values():
                 if j.get_fn() == subterm:
@@ -68,16 +71,21 @@ def extract_terms(text):
             # estraggo la variabile
             var = equations[i][equations[i].index('(')+1:equations[i].index(')')]
             new_eq = '{0} = cons({1}, {2})'.format(var, var+'u', var+'v')
+            new_car = '{0} = car(cons({1}, {2}));'.format(var+'u', var+'u', var+'v')
+            new_cdr = '{0} = car(cons({1}, {2}));'.format(var + 'v', var + 'u', var + 'v')
             # rimuovo il vecchio elemento e aggiungo i due nuovi
             equations[i] = 'cons({0}, {1})'.format(var+'u', var+'v')
             equations.append(var)
             equations[i] = equations[i].replace('!atom({0})'.format(var), new_eq)
+            equations.append('car(cons({1}, {2}))'.format(var+'u', var+'u', var+'v'))
+            equations.append('car(cons({1}, {2}))'.format(var + 'v', var + 'u', var + 'v'))
             # sostituisco anche nella string di ritorno con la formula completa
             copy_of_text = copy_of_text.replace('!atom({0})'.format(var), new_eq)
+            copy_of_text = copy_of_text + new_car + new_cdr
     # splitto anche i cons
     for eq in equations:
         # sostituisco !atom
-        map = have_subterms(eq, sf);
+        map = have_subterms(eq, sf)
         sf = merge_dict(sf, map)
     tmp = {}
     tmp.update(sf)
@@ -88,19 +96,12 @@ def extract_terms(text):
         index = get_index()
         sf[index] = Node(el, index)
     fn_to_index = populate_ccpar(sf)
-    # per ogni nodo cons, aggiungo un car ed un cdr e inserisco i relativi ccpar
-    var = tmp.values()
-    for term in var:
-        if 'cons' in term.get_fn():
-            car, cdr = build_car_cdr_for_cons(term);
-            sf[car.id] = car;
-            sf[cdr.id] = cdr;
-            # metto nei ccpar di cons il car e il cdr appena creati
-            sf[term.id].ccpar.add(car.id)
-            sf[term.id].ccpar.add(cdr.id)
     return sf, fn_to_index, copy_of_text
 
 def build_car_cdr_for_cons(term):
+    terms = set()
+    value = get_subterms(term.fn, terms)
+    #to do: sistemare... se ha sottotermini si spacca tutto
     nterm = term.fn[term.fn.index('(')+1: term.fn.index(')')]
     split = nterm.split(',')
     car = Node('car({0})'.format(split[0]), get_index())

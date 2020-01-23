@@ -1,11 +1,10 @@
-import networkx as nx
-import itertools
 
 class Graph:
     def __init__(self, index_map):
         self.DAG = {}
         self.index_map = index_map
         self.not_in_same_set = []
+        self.output = 'Soddisfacibile'
 
     def add_node(self, node):
         self.DAG[node.id] = node
@@ -33,7 +32,7 @@ class Graph:
         node_1.set_ccpar(set())
         # controllo se violo qualche legame
         if self.check_constraints():
-            raise Exception('Insoddisfacibile')
+            self.output = 'Insoddisfacibile'
 
     def congruent(self, id_1, id_2):
         print('CONGRUENT({0}, {1})): '.format(id_1, id_2))
@@ -94,7 +93,7 @@ class Graph:
         for equation in split:
             if '!=' in equation:
                 not_equals.append(equation)
-            else:
+            elif '=' in equation:
                 equals.append(equation)
 
         for not_congruent in not_equals:
@@ -104,9 +103,11 @@ class Graph:
         for equation in equals:
             split_eq = equation.split('=')
             print('{0} = {1}'.format(split_eq[0], split_eq[1]))
-            self.merge(self.index_map[split_eq[0]], self.index_map[split_eq[1]])
-
-        print('Soddisfacibile')
+            if self.output != 'Insoddisfacibile':
+                self.merge(self.index_map[split_eq[0]], self.index_map[split_eq[1]])
+            else:
+                break
+        print(self.output)
 
     def __str__(self):
         for n in self.DAG:

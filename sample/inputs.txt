@@ -1,0 +1,10 @@
+f(a, b) = a; f(f(a, b), b) != a;
+f(g(a)) = g(f(a)); f(g(f(b))) = a; f(b) = a; g(f(a)) != a;
+f(f(f(a))) = f(f(a)); f(f(f(f(a)))) = a; f(a) != a;
+f(x, y) = f(y, x); f(a, y) != f(y, a);
+f(g(x)) = g(f(x)); f(g(f(y))) = x; f(y) = x; g(f(x)) != x;
+f(a, b) = a; f(f(a, b), b) != a;
+f(f(f(a))) = f(a); f(f(a)) = a; f(a) != a;
+f(x) = f(y); f(f(x)) = f(x); f(f(y)) != f(f(x));
+!atom(x); !atom(y); car(x) = car(y); cdr(x) = cdr(y); f(x) != f(y);
+f(b) = b; f(f(b)) != car(cons(f(b), d));
