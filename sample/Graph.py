@@ -1,3 +1,5 @@
+import networkx as nx
+import matplotlib.pyplot as plt
 
 class Graph:
     def __init__(self, index_map):
@@ -107,6 +109,9 @@ class Graph:
                 self.merge(self.index_map[split_eq[0]], self.index_map[split_eq[1]])
             else:
                 break
+        if self.output == 'Soddisfacibile':
+            self.draw_graph()
+
         print(self.output)
 
     def __str__(self):
@@ -115,3 +120,14 @@ class Graph:
         return ""
 
 
+    def draw_graph(self):
+        G = nx.DiGraph()
+        for el in self.DAG.values():
+            G.add_node(el.get_fn())
+        for el in self.DAG.values():
+            for ccpar in el.get_ccpar():
+                G.add_edge(self.DAG[ccpar].get_fn(), el.get_fn())
+            for arg in el.get_args():
+                G.add_edge(el.get_fn(), self.DAG[arg].get_fn())
+        nx.draw(G, with_labels=True, font_weight='bold')
+        plt.show()

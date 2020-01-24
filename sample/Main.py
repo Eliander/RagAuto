@@ -55,9 +55,6 @@ def readInputs():
         new_formula = new_formula.replace(' ', '')
         graph.congruence_closure(new_formula)
 
-
-
-
 if __name__ == "__main__":
     readInputs()
 
