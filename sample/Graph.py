@@ -26,9 +26,9 @@ class Graph:
             return self.find(node.get_find())
 
     def union(self, id_1, id_2):
-        print('UNION({0}, {1}) \n'.format(id_1, id_2))
         node_1 = self.DAG[self.find(id_1)]
         node_2 = self.DAG[self.find(id_2)]
+        print('UNION({0}, {1}) \n'.format(node_1.get_fn(), node_2.get_fn()))
         node_1.set_find(node_2.get_find())
         node_2.set_ccpar(node_2.get_ccpar().union(node_1.get_ccpar()))
         node_1.set_ccpar(set())
@@ -37,9 +37,10 @@ class Graph:
             self.output = 'Insoddisfacibile'
 
     def congruent(self, id_1, id_2):
-        print('CONGRUENT({0}, {1})): '.format(id_1, id_2))
         node_1 = self.DAG[id_1]
         node_2 = self.DAG[id_2]
+        print('CONGRUENT({0}, {1})): '.format(node_1.get_fn(), node_2.get_fn()))
+
         if node_1.get_sym() == node_2.get_sym() and len(node_1.get_args()) == len(node_2.get_args()):
             list_args1 = list(node_1.get_args())
             list_args2 = list(node_2.get_args())
@@ -56,7 +57,9 @@ class Graph:
         return False
 
     def merge(self, id_1, id_2):
-        print('MERGE({0},{1}) \n'.format(id_1, id_2))
+        node_1 = self.DAG[id_1]
+        node_2 = self.DAG[id_2]
+        print('MERGE({0},{1}) \n'.format(node_1.get_fn(), node_2.get_fn()))
         if self.find(id_1) != self.find(id_2):
             p_i1 = self.ccpar(id_1)
             p_i2 = self.ccpar(id_2)
