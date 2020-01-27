@@ -1,22 +1,62 @@
-'''
-input style - theory of equality: f(a) = f(b), f(f(a)) = f(b), a != b, f(f(f(a))) != a
-'''
+# -*- coding: utf-8 -*-
+"""InputParser.py
+
+Questa classe viene utilizzata per parserizzare l'input estraendo i termini da analizzare
+utilizzando l'algoritmo di chiusura di congruenza.
+
+Attributi:
+    index (int): variabile che permette di generare un identificativo univoco per ogni nodo
+    terms_list [](String): lista di termini utilizzati nella teoria delle liste
+    terms_array [](String): lista di termini utilizzati nella teoria degli array
+
+Todo:
+    * testare il tutto quando si inseriscono i termini formati da più caratteri.
+    * aggiungere la chiusura di congruenza per gli array.
+    * resettare l'indice una volta terminata una chiusura di congruenza
+    * interfaccia grafica per inserimento della formula da testare e per la visualizzazione dell'output
+
+"""
 from sample.Graph import Graph
 from sample.Node import Node
+import _collections
 
 index = 0
-term_array = ['car', 'cdr', 'cons', 'atom', '!atom']
+terms_list = ['car', 'cdr', 'cons', 'atom', '!atom']
+terms_array = ['store', 'select']
 
 
 def save_subterm(open, close, text):
-    # estraggo il sottotermine
+    """
+        Funzione che estrae il successivo sottotermine
+
+        Args:
+            open: indici a cui si trova il carattere '(' nel testo in analisi.
+            close: indici a cui si trova il carattere ')' nel testo in analisi.
+            text: testo in analisi.
+
+        Returns:
+            Una stringa contenente il sottotermine
+
+    """
     if len(open) > 1:
-        return text[open[-2] + 1 : close[-1]+1]
+        # se non è più lunga di 1 significa che devo prendere tutto il termine
+        return text[open[-2] + 1: close[-1]+1]
     else:
         return text[:close[-1]+1]
 
 
 def have_subterms(text, sf):
+    """
+        Funzione che controlla se il termine ha un sottotermine.
+
+        Args:
+            text: termine da cui estrarre i sottotermini (se esistono).
+            sf: partizione contenente le classi singoletto.
+
+        Returns:
+            Una mappa aggiornata delle classi singoletto
+
+    """
     open = []
     close = []
     map = {}
@@ -27,31 +67,38 @@ def have_subterms(text, sf):
             open.append(i)
         elif text[i] == ')':
             close.append(i)
-            subterm = ''
-            for el in term_array:
-                if el in text[open[-1]+1: close[-1]]:
-                    subterm = save_subterm([1], close, text)
-                    break
-            if subterm == '':
-                subterm = save_subterm(open, close, text)
-            ispresent = False
+            sub_term = save_subterm(open, close, text)
+            is_present = False
             for j in sf.values():
-                if j.get_fn() == subterm:
-                    ispresent = True
-            if not ispresent:
+                if j.get_fn() == sub_term:
+                    is_present = True
+            if not is_present:
                 index = get_index()
-                map[index] = Node(subterm, index)
+                map[index] = Node(sub_term, index)
             # cancello le parentesi che ho salvato dalle liste
-            open.remove(open[-1])
-            close.remove(close[-1])
+            if len(open) > 0:
+                open.remove(open[-1])
+            if len(close) > 0:
+                close.remove(close[-1])
     return map
 
-'''
-Metodo che estrae i termini di una formula:
-   - car(x) = car(y); cdr(x) = cdr(y); f(x) = f(y); !atom(x); !atom(y)
-        car(x), car(y), cdr(x), cdr(y), f(x), f(y), cons(u1, v1), cons(u2, v2), x, y
-'''
+
 def extract_terms(text):
+    """
+        Funzione che etrae i termini dall'equazione.
+
+        Example:
+            car(x) = car(y); cdr(x) = cdr(y); f(x) = f(y); !atom(x); !atom(y)
+                car(x), car(y), cdr(x), cdr(y), f(x), f(y), cons(u1, v1), cons(u2, v2), x, y
+
+        Args:
+            text: equazione da cui estrarre i termini.
+
+        Returns:
+            Una mappa aggiornata delle classi singoletto
+            Una mappa id -> simbolo del nodo
+            Una stringa col testo in input a cui sono state applicate le trasformazioni necessarie
+    """
     # sanitize string
     text = text.strip()
     text = text.replace(' ', '')
@@ -67,6 +114,7 @@ def extract_terms(text):
     length = len(equations)
     # sostituisco i !atom
     for i in range(0, length):
+        # se è un !atom devo aggiungere i relativi car e cdr
         if "!atom" in equations[i]:
             # estraggo la variabile
             var = equations[i][equations[i].index('(')+1:equations[i].index(')')]
@@ -82,6 +130,12 @@ def extract_terms(text):
             # sostituisco anche nella string di ritorno con la formula completa
             copy_of_text = copy_of_text.replace('!atom({0})'.format(var), new_eq)
             copy_of_text = copy_of_text + new_car + new_cdr
+        # se è una store con una select applico r-o-w-1 e r-o-w-2, se è una select la sostituisco con un nuovo termine
+        if 'select' in equations[i]:
+            var = equations[i][equations[i].index('select('): ]
+            arg = {}
+            arg = have_subterms(var, arg)
+            sf = merge_dict(sf, arg)
     # splitto anche i cons
     for eq in equations:
         # sostituisco !atom
@@ -92,25 +146,14 @@ def extract_terms(text):
     to_add = set()
     for term in tmp.values():
         get_subterms(term.get_fn(), to_add)
+    to_add = list(to_add)
+    to_add.sort()
     for el in to_add:
-        index = get_index()
-        sf[index] = Node(el, index)
+        idx = get_index()
+        sf[idx] = Node(el, idx)
     fn_to_index = populate_ccpar(sf)
     return sf, fn_to_index, copy_of_text
 
-def build_car_cdr_for_cons(term):
-    terms = set()
-    value = get_subterms(term.fn, terms)
-    #to do: sistemare... se ha sottotermini si spacca tutto
-    nterm = term.fn[term.fn.index('(')+1: term.fn.index(')')]
-    split = nterm.split(',')
-    car = Node('car({0})'.format(split[0]), get_index())
-    cdr = Node('cdr({0})'.format(split[1]), get_index())
-    car.args.add(term.id)
-    cdr.args.add(term.id)
-    car.find = term.id
-    cdr.find = term.id
-    return car, cdr
 
 def get_subterms(term, arr):
     if '(' in term:
@@ -167,25 +210,7 @@ def distance_one(subterm, term):
                     counter -= 1
                 if counter == 1 and copy[j] == ',':
                     comma_index = j
-            l, r = copy[copy.index('(')+1:comma_index], copy[comma_index+1:copy.index(')', -1)]
-            if l == subterm.get_fn() or r == subterm.get_fn():
+            left, right = copy[copy.index('(')+1:comma_index], copy[comma_index+1:copy.index(')', -1)]
+            if left == subterm.get_fn() or right == subterm.get_fn():
                 return True
     return False
-
-
-def main():
-
-    singletons = extract_terms("f(g(h(a, w(b)),b)); g(f(a)); g(f(a)); f(h(g(a, b), d), l(a, c))")
-    nodes = []
-
-    for sin in singletons.values():
-        nodes.append(sin)
-    cc = Graph()
-    for node in nodes:
-        cc.add_node(node)
-    print(cc)
-    # print(extract_terms("f(a);f(f(a));f(a, b); f(f(a), w(b))"))
-
-
-if __name__ == "__main__":
-    main()

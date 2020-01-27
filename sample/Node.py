@@ -50,7 +50,7 @@ class Node:
         return sym
 
     def __str__(self):
-        return "id: {0}; \nfn: {1} ({2}); \nargs: {3}; \nccpar: {4}; \nfind: {5}\n\n".format(self.id, self.fn, self.sym, self.args, self.ccpar, self.find)
+        return "id: {0}; fn: {1} ({2}); args: {3}; ccpar: {4}; find: {5}".format(self.id, self.fn, self.sym, self.args, self.ccpar, self.find)
 
     #add the created node at the main list of nodes
 

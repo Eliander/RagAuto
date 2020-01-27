@@ -25,7 +25,7 @@ class Graph:
         else:
             return self.find(node.get_find())
 
-    def union(self, id_1, id_2):
+    def union_cc(self, id_1, id_2):
         node_1 = self.DAG[self.find(id_1)]
         node_2 = self.DAG[self.find(id_2)]
         print('UNION({0}, {1}) \n'.format(node_1.get_fn(), node_2.get_fn()))
@@ -40,11 +40,12 @@ class Graph:
         node_1 = self.DAG[id_1]
         node_2 = self.DAG[id_2]
         print('CONGRUENT({0}, {1})): '.format(node_1.get_fn(), node_2.get_fn()))
-
         if node_1.get_sym() == node_2.get_sym() and len(node_1.get_args()) == len(node_2.get_args()):
             list_args1 = list(node_1.get_args())
             list_args2 = list(node_2.get_args())
             for i in range(0, len(list_args1)):
+                print('{0} == {1} : {2}'.format(self.find(list_args1[i]), self.find(list_args2[i]),
+                                                self.find(list_args1[i]) != self.find(list_args2[i])))
                 if self.find(list_args1[i]) != self.find(list_args2[i]):
                     print('F \n')
                     return False
@@ -65,7 +66,7 @@ class Graph:
             p_i2 = self.ccpar(id_2)
             print('Pi_1 = {0}'.format(p_i1))
             print('Pi_2 = {0}'.format(p_i2))
-            self.union(id_1, id_2)
+            self.union_cc(id_1, id_2)
             tuples = []
             for i in p_i1:
                 for j in p_i2:
@@ -104,10 +105,9 @@ class Graph:
         for not_congruent in not_equals:
             neq = not_congruent.split('!=')
             self.not_in_same_set.append((self.index_map[neq[0]], self.index_map[neq[1]]))
-
+        print('{0}'.format(formula))
         for equation in equals:
             split_eq = equation.split('=')
-            print('{0} = {1}'.format(split_eq[0], split_eq[1]))
             if self.output != 'Insoddisfacibile':
                 self.merge(self.index_map[split_eq[0]], self.index_map[split_eq[1]])
             else:
