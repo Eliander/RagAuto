@@ -16,9 +16,7 @@ Todo:
     * interfaccia grafica per inserimento della formula da testare e per la visualizzazione dell'output
 
 """
-from sample.Graph import Graph
 from sample.Node import Node
-import _collections
 
 index = 0
 terms_list = ['car', 'cdr', 'cons', 'atom', '!atom']
@@ -40,7 +38,11 @@ def save_subterm(open, close, text):
     """
     if len(open) > 1:
         # se non è più lunga di 1 significa che devo prendere tutto il termine
-        return text[open[-2] + 1: close[-1]+1]
+        text_in_par = text[open[-1]: close[-1]+1]
+        index = open[-1] -1
+        while text[index] != ',' and text[index] != '(':
+            index -= 1
+        return text[index + 1: close[-1]+1]
     else:
         return text[:close[-1]+1]
 
@@ -130,13 +132,61 @@ def extract_terms(text):
             # sostituisco anche nella string di ritorno con la formula completa
             copy_of_text = copy_of_text.replace('!atom({0})'.format(var), new_eq)
             copy_of_text = copy_of_text + new_car + new_cdr
+        # se ci sono dei cons li sostituisco con le necessarie equazioni
+        if "cons" in equations[i]:
+            # estraggo i cons
+            conses = []
+            for j in range(0, len(equations[i])):
+                if equations[i][j:j+4] == 'cons':
+                    parenthesis = 0
+                    idx_var = j+4
+                    while parenthesis != 0 or equations[i][idx_var] != ')':
+                        if equations[i][idx_var] == '(':
+                            parenthesis += 1
+                        elif equations[i][idx_var] == ')':
+                            parenthesis -= 1
+                        idx_var += 1
+                    conses.append(equations[i][j:idx_var])
+            # per ogni cons faccio i relativi car e cdr
+            for cons in conses:
+                parenthesis = 0
+                idx_var = 4
+                # devo cercare la virgola dove splittare
+                while parenthesis != 1 or equations[i][idx_var] != ')':
+                    if cons[idx_var] == '(':
+                        parenthesis += 1
+                    elif cons[idx_var] == ')':
+                        parenthesis -= 1
+                    elif cons[idx_var] == ',' and parenthesis == 1:
+                        break
+                    idx_var += 1
+                car = cons[5:idx_var]
+                cdr = cons[idx_var+1:]
+                # elimino le parentesi in eccesso nel cdr
+                parenthesis = 0
+                for j in range(0, len(cdr)):
+                    if cdr[j] == '(':
+                        parenthesis += 1
+                    elif cdr[j] == ')':
+                        parenthesis -= 1
+                    if parenthesis == 0 and cdr[j] == ')':
+                        j +=1
+                        break
+                cdr = cdr[:j]
+                # aggiungo car e cdr al testo
+                copy_of_text += car + '=' + 'car(' + cons + ');'
+                copy_of_text += cdr + '=' + 'cdr(' + cons + ');'
         # se è una store con una select applico r-o-w-1 e r-o-w-2, se è una select la sostituisco con un nuovo termine
         if 'select' in equations[i]:
             var = equations[i][equations[i].index('select('): ]
             arg = {}
             arg = have_subterms(var, arg)
             sf = merge_dict(sf, arg)
-    # splitto anche i cons
+    # risplitto le equazioni
+    text = copy_of_text
+    text = text.replace('!=', ';')
+    text = text.replace('=', ';')
+    equations = text.split(';')
     for eq in equations:
         # sostituisco !atom
         map = have_subterms(eq, sf)
