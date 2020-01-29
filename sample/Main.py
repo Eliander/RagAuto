@@ -1,8 +1,8 @@
 from sample.Graph import Graph
 import sample.InputParser as parser
 
-formula = 'f(b) = b; f(f(b)) != car(cdr(cons(f(b), cons(b,d))));'
-#formula = ""
+formula = 'i1 = j; i2 != i1; select(a, j) = v1; select(store(store(a, i1, v1), i2, v2), j) != select(a, j)'
+#formula = "f(b) = b; f(f(b)) != car(cdr(cons(f(b), cons(b,d))));"
 PRINTS = True
 # formula = "!atom(x); !atom(y); car(x) = car(y); cdr(x) = cdr(y); f(x) != f(y);"
 
@@ -12,7 +12,6 @@ def main():
 
     graph = Graph(fn_to_index)
     graph.build_graph(terms)
-    print(new_formula)
     new_formula = new_formula.replace(' ', '')
     graph.congruence_closure(new_formula)
     print('----------------------------------------------------')

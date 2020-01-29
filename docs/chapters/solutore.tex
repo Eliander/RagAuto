@@ -4,3 +4,39 @@
 %! TEX root = main.tex
 \chapter{Analisi del solutore}
 \section{L'idea alla base}
+Il progetto, fin dall'inizio, è stato pensato diviso in due parti: il solutore ed il parser.
+Prima di analizzare il solutore, è necessario soffermarsi sulla struttura base dell'algoritmo
+di congruence closure: il \textit{Node}. La classe \texttt{Node.py} definisce il mattone fondamentale
+dell'algoritmo; i principali elementi della classe sono:
+\begin{itemize}
+    \item \texttt{int} \textbf{id}: id numerico del nodo
+    \item \texttt{String} \textbf{fn}: simbolo della funzione del nodo
+    \item \texttt{List<int>} \textbf{args}: id dei nodi argomenti
+    \item \texttt{int} \textbf{find}: id del rappresentante della classe a cui appartiene il nodo
+    \item \texttt{Set<int>} \textbf{ccpar}: id dei nodi genitori
+\end{itemize}
+I nodi vengono creati durante la fase di preprocessing dal parser: in questo modo, il solutore
+deve preoccuparsi solamente di eseguire la chiusura di congruenza tra gli elementi.
+\section{Il solutore}
+Il solutore consiste in una classe, \texttt{Graph.py}, contenente i metodi necessari all'implementazione
+della chiusura di congruenza; i metodi presenti sono:
+\begin{center}
+    \begin{tabular}{|m{6cm}|m{6cm}|}
+        \hline
+        \textbf{Metodo} & \textbf{Descrizione} \\ \hline
+         \textbf{node}(\texttt{int id}): \texttt{Node n} & Restituisce un nodo dato l'id. \\ \hline
+         \textbf{find}(\texttt{int id}): \texttt{int id} & Restituisce il find del nodo: se questo è diverso
+                    da se stesso, chiama la funzione \textbf{find} sul nuovo id. \\ \hline
+         \textbf{ccpar}(\texttt{int id}): \texttt{Set<int> id} & Restituisce gli id dei nodi genitori del rappresentante
+                    della classe. \\ \hline
+        \textbf{congruent}(\texttt{int id\_1, int id\_2}): \texttt{boolean result} & Confronta due nodi e restituisce
+                    \texttt{true} se sono congruenti (simbolo di funzione ed argomenti uguali),
+                    \texttt{false} altrimenti. \\ \hline
+        \textbf{union}(\texttt{int id\_1, int id\_2}): \texttt{void} & Unisce due classi di congruenza,
+                    accorpando i \textbf{ccpar} di un nodo nell'altro e cambiando il riferimento del \textbf{find} del
+                    nodo svuotato verso l'altro nodo. \\ \hline
+        \textbf{merge}(\texttt{int id\_1, int id\_2}): \texttt{void} & Metodo che permette di lanciare la \textbf{union}
+                    sui termini che devono essere messi nella stessa classe di congruenza. \\ \hline
+    \end{tabular}
+\end{center}
+

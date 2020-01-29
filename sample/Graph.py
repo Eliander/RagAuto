@@ -47,9 +47,6 @@ class Graph:
             list_args1 = list(node_1.get_args())
             list_args2 = list(node_2.get_args())
             for i in range(0, len(list_args1)):
-                if sample.Main.PRINTS:
-                    print('{0} == {1} : {2}'.format(self.find(list_args1[i]), self.find(list_args2[i]),
-                                                self.find(list_args1[i]) != self.find(list_args2[i])))
                 if self.find(list_args1[i]) != self.find(list_args2[i]):
                     if sample.Main.PRINTS:
                         print('F \n')

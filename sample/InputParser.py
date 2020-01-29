@@ -49,7 +49,7 @@ def save_subterm(open, close, text):
 
 def have_subterms(text, sf):
     """
-        Funzione che controlla se il termine ha un sottotermine.
+        Funzione che controlla se il termine dei sottotermini.
 
         Args:
             text: termine da cui estrarre i sottotermini (se esistono).
@@ -138,15 +138,9 @@ def extract_terms(text):
             conses = []
             for j in range(0, len(equations[i])):
                 if equations[i][j:j+4] == 'cons':
-                    parenthesis = 0
-                    idx_var = j+4
-                    while parenthesis != 0 or equations[i][idx_var] != ')':
-                        if equations[i][idx_var] == '(':
-                            parenthesis += 1
-                        elif equations[i][idx_var] == ')':
-                            parenthesis -= 1
-                        idx_var += 1
-                    conses.append(equations[i][j:idx_var])
+                    var = ''
+                    var = variable_of_term(equations[i], j, len('cons'))
+                    conses.append(var)
             # per ogni cons faccio i relativi car e cdr
             for cons in conses:
                 parenthesis = 0
@@ -177,11 +171,53 @@ def extract_terms(text):
                 copy_of_text += car + '=' + 'car(' + cons + ');'
                 copy_of_text += cdr + '=' + 'cdr(' + cons + ');'
         # se è una store con una select applico r-o-w-1 e r-o-w-2, se è una select la sostituisco con un nuovo termine
-        if 'select' in equations[i]:
-            var = equations[i][equations[i].index('select('): ]
-            arg = {}
-            arg = have_subterms(var, arg)
-            sf = merge_dict(sf, arg)
+        if "select" in equations[i]:
+            # estraggo i read-over-write
+            stores = []
+            for j in range(0, len(equations[i])):
+                if equations[i][j:j + 12] == 'select(store':
+                    var = variable_of_term(equations[i], j, len('select'))
+                    stores.append(var)
+            # per ogni r-o-w valuto i casi = e !=
+            for row in stores:
+                parenthesis = 0
+                idx_var = len('select(')
+                # devo cercare la virgola dove splittare per recuperare l'index store
+                while parenthesis != 1 or equations[i][idx_var] != ',':
+                    if row[idx_var] == '(':
+                        parenthesis += 1
+                    elif row[idx_var] == ')':
+                        parenthesis -= 1
+                    idx_var += 1
+                index_store = row[idx_var+1:].split(',')[0]
+                value_store = row[idx_var+1:].split(',')[1].replace(')', '')
+
+                parenthesis = 0
+                idx_var = len('select')
+                # devo cercare la virgola dove splittare per recuperare l'index select
+                while parenthesis != 1 or equations[i][idx_var] != ',':
+                    if row[idx_var] == '(':
+                        parenthesis += 1
+                    elif row[idx_var] == ')':
+                        parenthesis -= 1
+                    idx_var += 1
+                index_select = row[idx_var + 1:].split(')')[0].replace(',', '')
+
+                cdr = row[idx_var + 1:]
+                # elimino le parentesi in eccesso nel cdr
+                parenthesis = 0
+                for j in range(0, len(cdr)):
+                    if cdr[j] == '(':
+                        parenthesis += 1
+                    elif cdr[j] == ')':
+                        parenthesis -= 1
+                    if parenthesis == 0 and cdr[j] == ')':
+                        j += 1
+                        break
+                cdr = cdr[:j]
+                # aggiungo car e cdr al testo
+                copy_of_text += car + '=' + 'car(' + cons + ');'
+                copy_of_text += cdr + '=' + 'cdr(' + cons + ');'
     # risplitto le equazioni
     text = copy_of_text
     text = text.replace('!=', ';')
@@ -203,6 +239,22 @@ def extract_terms(text):
         sf[idx] = Node(el, idx)
     fn_to_index = populate_ccpar(sf)
     return sf, fn_to_index, copy_of_text
+
+
+def variable_of_term(equation, j, length):
+    parenthesis = -1
+    idx_var = j + length
+    while parenthesis != 0:
+        if equation[idx_var] == '(':
+            if parenthesis == -1:
+                parenthesis = 0
+            parenthesis += 1
+        elif equation[idx_var] == ')':
+            if parenthesis == -1:
+                parenthesis = 0
+            parenthesis -= 1
+        idx_var += 1
+    return equation[j:idx_var]
 
 
 def get_subterms(term, arr):
