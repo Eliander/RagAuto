@@ -105,7 +105,8 @@ def extract_terms(text):
     text = text.strip()
     text = text.replace(' ', '')
     # copia della stringa da ritornare: avra' i termini !atom cambiati
-    copy_of_text = text
+    result = set()
+    copy = text
     # replace di != e = con ;
     text = text.replace('!=', ';')
     text = text.replace('=', ';')
@@ -114,8 +115,12 @@ def extract_terms(text):
     sf = {}
     # conto gli elementi per ciclare
     length = len(equations)
-    # sostituisco i !atom
+    '''
+    Per ogni equazione devo verificare se ho bisogno di applicare le trasformazioni. Mentre !atom e car/cdr mantengono
+    una sola formula, con store e select posso averne più di una. Sposto quindi store-select fuori
+    '''
     for i in range(0, length):
+        copy_of_text = copy
         # se è un !atom devo aggiungere i relativi car e cdr
         if "!atom" in equations[i]:
             # estraggo la variabile
@@ -174,51 +179,52 @@ def extract_terms(text):
         if "select" in equations[i]:
             # estraggo i read-over-write
             stores = []
+
+            # quando splitto ottengo sempre #store + 1 elementi nell'array
             for j in range(0, len(equations[i])):
-                if equations[i][j:j + 12] == 'select(store':
-                    var = variable_of_term(equations[i], j, len('select'))
+                if equations[i][j:j + len('store')] == 'store':
+                    var = variable_of_term(equations[i], j, len('store'))
                     stores.append(var)
             # per ogni r-o-w valuto i casi = e !=
             for row in stores:
-                parenthesis = 0
-                idx_var = len('select(')
+                copy_of_text = copy
+                parenthesis = -1
+                # partendo dal fondo, prendo il valore da inserire : funziona anche se ho una select
+                idx_var = len(row) - 2
                 # devo cercare la virgola dove splittare per recuperare l'index store
-                while parenthesis != 1 or equations[i][idx_var] != ',':
+                # to do: devo cercare su equazione non su row
+                while parenthesis != 0 and row[idx_var] != ',':
                     if row[idx_var] == '(':
                         parenthesis += 1
                     elif row[idx_var] == ')':
                         parenthesis -= 1
-                    idx_var += 1
-                index_store = row[idx_var+1:].split(',')[0]
-                value_store = row[idx_var+1:].split(',')[1].replace(')', '')
-
+                    idx_var -= 1
+                # elimino la virgola e la parentesi finale
+                value_store = row[idx_var+1:-1]
+                # estraggo l'indice
+                pieces = row[:idx_var].split(',')
+                index_store = pieces[-1].replace(')', '')
+                # estraggo lo store name
+                store_name = get_store_name(row)
+                # ora prendo l'indice della select
                 parenthesis = 0
-                idx_var = len('select')
                 # devo cercare la virgola dove splittare per recuperare l'index select
-                while parenthesis != 1 or equations[i][idx_var] != ',':
-                    if row[idx_var] == '(':
-                        parenthesis += 1
-                    elif row[idx_var] == ')':
-                        parenthesis -= 1
-                    idx_var += 1
-                index_select = row[idx_var + 1:].split(')')[0].replace(',', '')
-
-                cdr = row[idx_var + 1:]
-                # elimino le parentesi in eccesso nel cdr
-                parenthesis = 0
-                for j in range(0, len(cdr)):
-                    if cdr[j] == '(':
-                        parenthesis += 1
-                    elif cdr[j] == ')':
-                        parenthesis -= 1
-                    if parenthesis == 0 and cdr[j] == ')':
-                        j += 1
+                for j in range(len(equations[i]) - 1, 0, -1):
+                    if equations[i][j] == ',':
+                        # salvo l'indice della select eliminando virgola e parentesi
+                        index_select = equations[i][j + 1: -1]
                         break
-                cdr = cdr[:j]
-                # aggiungo car e cdr al testo
-                copy_of_text += car + '=' + 'car(' + cons + ');'
-                copy_of_text += cdr + '=' + 'cdr(' + cons + ');'
-    # risplitto le equazioni
+                # le due nuove equazioni sono:
+                    # select(.. , i) = .... ; i = j
+                    # select(.. , i) = .... ; i != j
+                new_r_o_w = '{0}'.format(value_store)
+                indexes = '{0} = {1};'.format(index_select, index_store)
+                # to do: manca la versione !=
+                copy_of_text += indexes
+                copy_of_text = copy_of_text.replace(equations[i], new_r_o_w)
+                result.add(copy_of_text)
+        result.add(copy_of_text)
+    # risplitto le equazioni per portarmi dietro il preprocessing
     text = copy_of_text
     text = text.replace('!=', ';')
     text = text.replace('=', ';')
@@ -231,14 +237,28 @@ def extract_terms(text):
     tmp.update(sf)
     to_add = set()
     for term in tmp.values():
-        get_subterms(term.get_fn(), to_add)
+        get_single_terms(term.get_fn(), to_add)
     to_add = list(to_add)
     to_add.sort()
     for el in to_add:
         idx = get_index()
         sf[idx] = Node(el, idx)
     fn_to_index = populate_ccpar(sf)
-    return sf, fn_to_index, copy_of_text
+    return sf, fn_to_index, list(result)
+
+
+def get_store_name(text):
+    parenthesis = 0
+    store_name = ''
+    text = text.replace('store(', '#', 1)
+    if 'store(' in text:
+        store_name = get_store_name(text)
+    else:
+        splitted = text.split('#')
+        for splitt in splitted:
+            if splitt != '':
+                store_name = splitt.split(',')[0]
+    return store_name
 
 
 def variable_of_term(equation, j, length):
@@ -257,7 +277,7 @@ def variable_of_term(equation, j, length):
     return equation[j:idx_var]
 
 
-def get_subterms(term, arr):
+def get_single_terms(term, arr):
     if '(' in term:
         if ')' in term:
             end = term.index(')', -1)+1
@@ -266,7 +286,7 @@ def get_subterms(term, arr):
         term = term[term.index('(')+1:end]
         values = term.split(',')
         for v in values:
-            get_subterms(v, arr)
+            get_single_terms(v, arr)
     else:
         arr.add(term.replace(')', ''))
         return arr
