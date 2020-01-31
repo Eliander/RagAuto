@@ -101,12 +101,12 @@ def extract_terms(text):
             Una mappa id -> simbolo del nodo
             Una stringa col testo in input a cui sono state applicate le trasformazioni necessarie
     """
+    formulas = []
     # sanitize string
     text = text.strip()
     text = text.replace(' ', '')
     # copia della stringa da ritornare: avra' i termini !atom cambiati
-    result = set()
-    copy = text
+    copy_of_text = text
     # replace di != e = con ;
     text = text.replace('!=', ';')
     text = text.replace('=', ';')
@@ -115,12 +115,8 @@ def extract_terms(text):
     sf = {}
     # conto gli elementi per ciclare
     length = len(equations)
-    '''
-    Per ogni equazione devo verificare se ho bisogno di applicare le trasformazioni. Mentre !atom e car/cdr mantengono
-    una sola formula, con store e select posso averne più di una. Sposto quindi store-select fuori
-    '''
+    # sostituisco i !atom
     for i in range(0, length):
-        copy_of_text = copy
         # se è un !atom devo aggiungere i relativi car e cdr
         if "!atom" in equations[i]:
             # estraggo la variabile
@@ -176,54 +172,15 @@ def extract_terms(text):
                 copy_of_text += car + '=' + 'car(' + cons + ');'
                 copy_of_text += cdr + '=' + 'cdr(' + cons + ');'
         # se è una store con una select applico r-o-w-1 e r-o-w-2, se è una select la sostituisco con un nuovo termine
-        if "select" in equations[i]:
-            # estraggo i read-over-write
-            stores = []
-
-            # quando splitto ottengo sempre #store + 1 elementi nell'array
-            for j in range(0, len(equations[i])):
-                if equations[i][j:j + len('store')] == 'store':
-                    var = variable_of_term(equations[i], j, len('store'))
-                    stores.append(var)
-            # per ogni r-o-w valuto i casi = e !=
-            for row in stores:
-                copy_of_text = copy
-                parenthesis = -1
-                # partendo dal fondo, prendo il valore da inserire : funziona anche se ho una select
-                idx_var = len(row) - 2
-                # devo cercare la virgola dove splittare per recuperare l'index store
-                # to do: devo cercare su equazione non su row
-                while parenthesis != 0 and row[idx_var] != ',':
-                    if row[idx_var] == '(':
-                        parenthesis += 1
-                    elif row[idx_var] == ')':
-                        parenthesis -= 1
-                    idx_var -= 1
-                # elimino la virgola e la parentesi finale
-                value_store = row[idx_var+1:-1]
-                # estraggo l'indice
-                pieces = row[:idx_var].split(',')
-                index_store = pieces[-1].replace(')', '')
-                # estraggo lo store name
-                store_name = get_store_name(row)
-                # ora prendo l'indice della select
-                parenthesis = 0
-                # devo cercare la virgola dove splittare per recuperare l'index select
-                for j in range(len(equations[i]) - 1, 0, -1):
-                    if equations[i][j] == ',':
-                        # salvo l'indice della select eliminando virgola e parentesi
-                        index_select = equations[i][j + 1: -1]
-                        break
-                # le due nuove equazioni sono:
-                    # select(.. , i) = .... ; i = j
-                    # select(.. , i) = .... ; i != j
-                new_r_o_w = '{0}'.format(value_store)
-                indexes = '{0} = {1};'.format(index_select, index_store)
-                # to do: manca la versione !=
-                copy_of_text += indexes
-                copy_of_text = copy_of_text.replace(equations[i], new_r_o_w)
-                result.add(copy_of_text)
-        result.add(copy_of_text)
+        if "store" in equations[i]:
+            res = []
+            store_select(equations[i], res)
+            for el in res:
+                print(el)
+            #to do: aggiungere a copy of text
+        if "select" in equations[i] and "store" not in equations[i]:
+            fn = select_to_function(equations[i])
+            copy_of_text = copy_of_text.replace(equations[i], fn)
     # risplitto le equazioni per portarmi dietro il preprocessing
     text = copy_of_text
     text = text.replace('!=', ';')
@@ -244,7 +201,87 @@ def extract_terms(text):
         idx = get_index()
         sf[idx] = Node(el, idx)
     fn_to_index = populate_ccpar(sf)
-    return sf, fn_to_index, list(result)
+    return sf, fn_to_index, copy_of_text
+
+
+def store_select(equation, arr):
+    # estraggo il primo read-over-write
+    store = ''
+    if 'store' in equation:
+        store = variable_of_term(equation, equation.index('store'), len('store'))
+        # per il r-o-w valuto i casi = e !=
+        parenthesis = -1
+        # partendo dal fondo, prendo il valore da inserire : funziona anche se ho una select
+        idx_var = len(store) - 2
+        # devo cercare la virgola dove splittare per recuperare l'index store
+        # to do: devo cercare su equazione non su row
+        while parenthesis != 0 and store[idx_var] != ',':
+            if store[idx_var] == '(':
+                parenthesis += 1
+            elif store[idx_var] == ')':
+                parenthesis -= 1
+            idx_var -= 1
+        # elimino la virgola e la parentesi finale
+        value_store = store[idx_var + 1:-1]
+        # estraggo l'indice
+        pieces = store[:idx_var].split(',')
+        index_store = pieces[-1].replace(')', '')
+        # estraggo lo store name
+        store_name = get_store_name(store)
+        # ora prendo l'indice della select
+        parenthesis = 1
+        # devo cercare la virgola dove splittare per recuperare l'index select
+        idx = len('select(')
+        while equation[idx - 1] != ')' or parenthesis != 0:
+            if equation[idx] == '(':
+                parenthesis += 1
+            elif equation[idx] == ')':
+                parenthesis -= 1
+            elif equation[idx] == ',':
+                last_comma = idx
+            idx += 1
+        index_select = equation[last_comma + 1 : idx - 1]
+        # estraggo le vecchie condizioni
+        old_conditions = ''
+        if ';' in equation:
+            split = equation.split(';')
+            for el in split:
+                if 'select' not in el and 'store' not in el:
+                    old_conditions = old_conditions + el
+        # le due nuove equazioni sono:
+        # select(.. , i) = .... ; i = j
+        # select(.. , i) = .... ; i != j
+        new_r_o_w = '{0}'.format(value_store)
+        indexes = '{0}={1};'.format(index_select, index_store)
+        # to do: manca la versione !=
+        eq = ''
+        eq = new_r_o_w + ';' + indexes
+        arr.append(eq)
+        eq = '{0}!={1};{2}'.format(index_select, index_store, old_conditions)
+        # rimuovo lo store appena valutato
+        copy_store = store.replace('store(', '', 1)
+        # taglio quando arrivo alla aprentesi giusta
+        parenthesis = 0
+        idx = 0
+        while parenthesis != 0 or copy_store[idx] != ',':
+            if copy_store[idx] == '(':
+                parenthesis += 1
+            elif copy_store[idx] == ')':
+                parenthesis -= 1
+            idx += 1
+        equation = equation.replace(store, copy_store[:idx])
+        if 'store' in equation:
+            store_select(equation + ';' + eq, arr)
+        else:
+            # trasformo il select in una funzione
+            arr.append(select_to_function(equation) + ';' + eq)
+            return arr
+
+
+def select_to_function(equation):
+    select_store = equation[len('select('): equation.index(',')]
+    select_index = equation[equation.index(',') + 1: equation.index(')')]
+    return 'f_{0}({1})'.format(select_store, select_index)
 
 
 def get_store_name(text):
