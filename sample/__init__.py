@@ -1,2 +1,2 @@
-from sample import Main
+
 

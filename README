@@ -1,0 +1,24 @@
+--------------------------------------------------------------------------------------------------------------------------------------
+|                                                Progetto Elia Piacentini - VR448249                                                 |
+--------------------------------------------------------------------------------------------------------------------------------------
+Prerequisiti: Python 3, pip, pipenv
+    Installare `pipenv`: pip3 install pipenv
+Esecuzione: muoversi nella home del progetto e lanciare il comando `pipenv run python3 Main.py [-s set | -d True | -p True]`
+Parametri:
+    * -c, --clauses: clausole di cui testare la soddisfacibilità. Ogni clausola DEVE essere contenuta tra apici e terminare
+                 con con ';' (anche l'ultima). La congruenza è rappresentata da `=` mentre la non congruenza da `!=`. Se
+                 non specificato, apre il file `inputs.txt` presente in ./sample, contenente una lista di formule nella
+                 forma `formula #result` con result uguale a `Soddisfacibile` o `Insoddisfacibile`.
+    * -d, --details: booleano che permette di stampare i dettagli relativi alla chiusura di congruenza, come le operazioni eseguite.
+                 Se non specificato, il default è `False`.
+    * -p, --plot: booleano che permette di visualizzare o no i plot dei set soddisfacibili [!WIP!]. Se non specificato, il default
+                 è `False`.
+    * -h, --help: mostra l'help relativo ai parametri
+Esempi di parametri inline:
+    * pipenv run python3 Main.py -c "f(a, b) = a; f(f(a, b), b)!= a;"
+    * pipenv run python3 Main.py -c "f(a, b) = a; f(f(a, b), b)!= a;" -d True
+    * pipenv run python3 Main.py -c "f(f(f(a))) = f(a); f(f(a)) = a; f(a) != a;" -p True
+Esempio di linea in `sample/input.txt`:
+    * f(a, b) = a; f(f(a, b), b) != a; #Insoddisfacibile
+    * f(f(f(a))) = f(a); f(f(a)) = a; f(a) != a; #Soddisfacibile
+

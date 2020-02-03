@@ -10,12 +10,13 @@ Attributi:
     terms_array [](String): lista di termini utilizzati nella teoria degli array
 
 Todo:
-    * aggiungere la chiusura di congruenza per gli array.
-    * resettare l'indice una volta terminata una chiusura di congruenza
-    * interfaccia grafica per inserimento della formula da testare e per la visualizzazione dell'output
     * se ho più negazioni nella formula? gestire lista di liste proibita
     * find con id che ha più elementi nel ccpar
+    * rendere possibile passare il path di un file di input
+    * far accettare nel file di input True e False al posto di Soddisfacibile ed Insoddisfacibile
 """
+import itertools
+
 from sample.Node import Node
 
 index = 0
@@ -82,6 +83,7 @@ def have_subterms(text, sf):
                 open.remove(open[-1])
             if len(close) > 0:
                 close.remove(close[-1])
+    # se è un termine singolo controllo che non sia già stato inserito e lo aggiungo
     return map
 
 
@@ -102,6 +104,7 @@ def extract_terms(text):
             Una stringa col testo in input a cui sono state applicate le trasformazioni necessarie
     """
     formulas = []
+    store_select_map = {}
     # sanitize string
     text = text.strip()
     text = text.replace(' ', '')
@@ -176,33 +179,52 @@ def extract_terms(text):
         if "store" in equations[i]:
             res = []
             store_select(equations[i], res)
-            for el in res:
-                print(el)
+            # associo ad ogni store - select la propria parametrizzazione
+            store_select_map[equations[i]] = res
             #to do: aggiungere a copy of text
-        if "select" in equations[i] and "store" not in equations[i]:
+        # se c'è solo select lo risolvo, altrimenti ho già fatto nel caso store
+        elif "select" in equations[i] and "store" not in equations[i]:
             fn = select_to_function(equations[i])
             copy_of_text = copy_of_text.replace(equations[i], fn)
-    # risplitto le equazioni per portarmi dietro il preprocessing
-    text = copy_of_text
-    text = text.replace('!=', ';')
-    text = text.replace('=', ';')
-    equations = text.split(';')
-    for eq in equations:
-        # sostituisco !atom
-        map = have_subterms(eq, sf)
-        sf = merge_dict(sf, map)
-    tmp = {}
-    tmp.update(sf)
-    to_add = set()
-    for term in tmp.values():
-        get_single_terms(term.get_fn(), to_add)
-    to_add = list(to_add)
-    to_add.sort()
-    for el in to_add:
-        idx = get_index()
-        sf[idx] = Node(el, idx)
-    fn_to_index = populate_ccpar(sf)
-    return sf, fn_to_index, copy_of_text
+    # aggiorno la copy con gli row trovate
+    values = list(store_select_map.values())
+    product = list(itertools.product(*values))
+    keys = list(store_select_map.keys())
+    for el in product:
+        txt = copy_of_text
+        for idx in range(0, len(el)):
+            # per evitare di generare una formula sbagliata, sostituisco il valore e poi aggiungo il resto
+            txt = txt.replace(keys[idx], el[0][: el[0].index(';')])
+            txt += el[0][el[0].index(';'):]
+        formulas.append(txt)
+
+    fn_to_index = []
+    sets = []
+    for formula in formulas:
+        sf = {}
+        text = formula
+        text = text.replace('!=', ';')
+        text = text.replace('=', ';')
+        text = text.replace(' ', '')
+        equations = text.split(';')
+        for eq in equations:
+            map = have_subterms(eq, sf)
+            sf = merge_dict(sf, map)
+        tmp = {}
+        tmp.update(sf)
+        to_add = set(get_single_terms(text))
+        for term in tmp.values():
+            get_single_terms_in_function(term.get_fn(), to_add)
+        to_add = list(to_add)
+        to_add.sort()
+        for el in to_add:
+            idx = get_index()
+            sf[idx] = Node(el, idx)
+        indexes = populate_ccpar(sf)
+        fn_to_index.append(indexes)
+        sets.append(sf)
+        reset_index()
+    return sets, fn_to_index, formulas
 
 
 def store_select(equation, arr):
@@ -258,7 +280,7 @@ def store_select(equation, arr):
         eq = ''
         eq = new_r_o_w + ';' + indexes
         arr.append(eq)
-        eq = '{0}!={1};{2}'.format(index_select, index_store, old_conditions)
+        eq = '{0}!={1};{2};'.format(index_select, index_store, old_conditions)
         # rimuovo lo store appena valutato
         copy_store = store.replace('store(', '', 1)
         # taglio quando arrivo alla aprentesi giusta
@@ -315,7 +337,16 @@ def variable_of_term(equation, j, length):
     return equation[j:idx_var]
 
 
-def get_single_terms(term, arr):
+def get_single_terms(text):
+    split = text.split(';')
+    to_add = set()
+    for sp in split:
+        if '(' not in sp and ')' not in sp and '' != sp:
+            to_add.add(sp)
+    return to_add
+
+
+def get_single_terms_in_function(term, arr):
     if '(' in term:
         if ')' in term:
             end = term.index(')', -1)+1
@@ -324,7 +355,7 @@ def get_single_terms(term, arr):
         term = term[term.index('(')+1:end]
         values = term.split(',')
         for v in values:
-            get_single_terms(v, arr)
+            get_single_terms_in_function(v, arr)
     else:
         arr.add(term.replace(')', ''))
         return arr
@@ -335,6 +366,9 @@ def get_index():
     index += 1
     return index - 1
 
+def reset_index():
+    global index
+    index = 0
 
 # se uso update cambia gli indici
 def merge_dict(dict1, dict2):

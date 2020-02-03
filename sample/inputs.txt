@@ -6,5 +6,6 @@ f(g(x)) = g(f(x)); f(g(f(y))) = x; f(y) = x; g(f(x)) != x; #Insoddisfacibile
 f(f(f(a))) = f(a); f(f(a)) = a; f(a) != a; #Soddisfacibile
 f(x) = f(y); f(f(x)) = f(x); f(f(y)) != f(f(x)); #Insoddisfacibile
 !atom(x); !atom(y); car(x) = car(y); cdr(x) = cdr(y); f(x) != f(y); #Insoddisfacibile
-f(b) = b; f(f(b)) != car(cons(f(b), d)); #Soddisfacibile
+f(b) = b; f(f(b)) != car(cons(f(b), d)); #Insoddisfacibile
 f(b) = b; f(f(b)) != car(cdr(cons(f(b), cons(b,d)))); #Insoddisfacibile
+i1 = j; i2 != i1; select(a, j) = v1; select(store(store(a, i1, v1), i2, v2), j) != select(a, j); #Insoddisfacibile

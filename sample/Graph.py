@@ -1,13 +1,14 @@
 import networkx as nx
 import matplotlib.pyplot as plt
-import sample.Main
 
 class Graph:
-    def __init__(self, index_map):
+    def __init__(self, index_map, details, plot):
         self.DAG = {}
         self.index_map = index_map
         self.not_in_same_set = []
         self.output = 'Soddisfacibile'
+        self.DETAILS = details
+        self.PLOT = plot
 
     def add_node(self, node):
         self.DAG[node.id] = node
@@ -29,7 +30,7 @@ class Graph:
     def union_cc(self, id_1, id_2):
         node_1 = self.DAG[self.find(id_1)]
         node_2 = self.DAG[self.find(id_2)]
-        if sample.Main.PRINTS:
+        if self.DETAILS:
             print('UNION({0}, {1}) \n'.format(node_1.get_fn(), node_2.get_fn()))
         node_1.set_find(node_2.get_find())
         node_2.set_ccpar(node_2.get_ccpar().union(node_1.get_ccpar()))
@@ -41,36 +42,36 @@ class Graph:
     def congruent(self, id_1, id_2):
         node_1 = self.DAG[id_1]
         node_2 = self.DAG[id_2]
-        if sample.Main.PRINTS:
+        if self.DETAILS:
             print('CONGRUENT({0}, {1})): '.format(node_1.get_fn(), node_2.get_fn()))
         if node_1.get_sym() == node_2.get_sym() and len(node_1.get_args()) == len(node_2.get_args()):
             list_args1 = list(node_1.get_args())
             list_args2 = list(node_2.get_args())
             for i in range(0, len(list_args1)):
                 if self.find(list_args1[i]) != self.find(list_args2[i]):
-                    if sample.Main.PRINTS:
+                    if self.DETAILS:
                         print('F \n')
                     return False
                 elif self.find(list_args1[i]) != self.find(list_args2[i]) and list_args1[i].get_sym == 'cons':
-                    if sample.Main.PRINTS:
+                    if self.DETAILS:
                         print('F by axiom !atom \n')
                     return False
-            if sample.Main.PRINTS:
+            if self.DETAILS:
                 print('T \n')
             return True
-        if sample.Main.PRINTS:
+        if self.DETAILS:
             print('F \n')
         return False
 
     def merge(self, id_1, id_2):
         node_1 = self.DAG[id_1]
         node_2 = self.DAG[id_2]
-        if sample.Main.PRINTS:
+        if self.DETAILS:
             print('MERGE({0},{1}) \n'.format(node_1.get_fn(), node_2.get_fn()))
         if self.find(id_1) != self.find(id_2):
             p_i1 = self.ccpar(id_1)
             p_i2 = self.ccpar(id_2)
-            if sample.Main.PRINTS:
+            if self.DETAILS:
                 print('Pi_1 = {0}'.format(p_i1))
                 print('Pi_2 = {0}'.format(p_i2))
             self.union_cc(id_1, id_2)
@@ -88,8 +89,7 @@ class Graph:
             id_2 = self.DAG[t[1]].get_id()
             # fn_1 = self.DAG[id_1].get_fn()   ---  and fn_1 == 'cons'
             if self.find(id_1) == self.find(id_2):
-                if sample.Main.PRINTS:
-                    print('Violazione clausola: {0} != {1} '.format(self.DAG[id_1].get_fn(), self.DAG[id_2].get_fn()))
+                print('Violazione clausola: {0} != {1} '.format(self.DAG[id_1].get_fn(), self.DAG[id_2].get_fn()))
                 return True
         return False
 
@@ -120,7 +120,7 @@ class Graph:
                 self.merge(self.index_map[split_eq[0]], self.index_map[split_eq[1]])
             else:
                 break
-        if self.output == 'Soddisfacibile':
+        if self.output == 'Soddisfacibile' and self.PLOT:
             self.draw_graph()
 
         print(self.output)

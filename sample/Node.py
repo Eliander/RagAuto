@@ -1,6 +1,3 @@
-from sample.Graph import Graph as cc
-from sample import Main
-
 class Node:
 
     id_value = 0
