@@ -10,11 +10,11 @@ Attributi:
     terms_array [](String): lista di termini utilizzati nella teoria degli array
 
 Todo:
-    * testare il tutto quando si inseriscono i termini formati da più caratteri.
     * aggiungere la chiusura di congruenza per gli array.
     * resettare l'indice una volta terminata una chiusura di congruenza
     * interfaccia grafica per inserimento della formula da testare e per la visualizzazione dell'output
-
+    * se ho più negazioni nella formula? gestire lista di liste proibita
+    * find con id che ha più elementi nel ccpar
 """
 from sample.Node import Node
 
@@ -123,18 +123,19 @@ def extract_terms(text):
             var = equations[i][equations[i].index('(')+1:equations[i].index(')')]
             new_eq = '{0} = cons({1}, {2})'.format(var, var+'u', var+'v')
             new_car = '{0} = car(cons({1}, {2}));'.format(var+'u', var+'u', var+'v')
-            new_cdr = '{0} = car(cons({1}, {2}));'.format(var + 'v', var + 'u', var + 'v')
+            new_cdr = '{0} = cdr(cons({1}, {2}));'.format(var + 'v', var + 'u', var + 'v')
             # rimuovo il vecchio elemento e aggiungo i due nuovi
             equations[i] = 'cons({0}, {1})'.format(var+'u', var+'v')
-            equations.append(var)
+            # equations.append(var)
             equations[i] = equations[i].replace('!atom({0})'.format(var), new_eq)
             equations.append('car(cons({1}, {2}))'.format(var+'u', var+'u', var+'v'))
-            equations.append('car(cons({1}, {2}))'.format(var + 'v', var + 'u', var + 'v'))
+            equations.append('cdr(cons({1}, {2}))'.format(var + 'v', var + 'u', var + 'v'))
             # sostituisco anche nella string di ritorno con la formula completa
             copy_of_text = copy_of_text.replace('!atom({0})'.format(var), new_eq)
             copy_of_text = copy_of_text + new_car + new_cdr
         # se ci sono dei cons li sostituisco con le necessarie equazioni
-        if "cons" in equations[i]:
+        # nb: se ho gia rimosso !atom non lo faccio
+        elif "cons" in equations[i]:
             # estraggo i cons
             conses = []
             for j in range(0, len(equations[i])):
