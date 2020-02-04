@@ -3,21 +3,21 @@
 %! TEX encoding = UTF-8
 %! TEX root = main.tex
 \chapter{Analisi del solutore}
-\section{L'idea alla base}
-Il progetto, fin dall'inizio, è stato pensato diviso in due parti: il solutore ed il parser. Il solutore si occupa di
-eseguire l'algoritmo di Chiusura di congruenza mentre il parser si occupa della fase di preprocessing dell'input.
+\section{Il Node}
 Prima di analizzare il solutore, è necessario soffermarsi sulla struttura base dell'algoritmo
-di congruence closure: il \textit{Node}. La classe \texttt{Node.py} definisce il mattone fondamentale
-della chiusura di congruenza; i principali elementi della classe sono:
+di congruence closure: il \textit{Node}; definito nella classe \texttt{Node.py}, i principali elementi della classe sono:
 \begin{itemize}
     \item \texttt{int} \textbf{id}: id numerico del nodo
     \item \texttt{String} \textbf{fn}: simbolo della funzione del nodo
     \item \texttt{List<int>} \textbf{args}: id dei nodi argomenti
     \item \texttt{int} \textbf{find}: id del rappresentante della classe a cui appartiene il nodo
     \item \texttt{Set<int>} \textbf{ccpar}: id dei nodi genitori
+    \item \texttt{String} \textbf{sym}: simbolo del nodo
 \end{itemize}
-I nodi vengono creati durante la fase di preprocessing dal parser: in questo modo, il solutore
-deve preoccuparsi solamente di eseguire la chiusura di congruenza tra gli elementi.
+Di questi, l'attributo \textbf{sym} non era previsto dall'algoritmo; è un attributo di supporto utilizzato nella \textbf{congruent}
+al posto di \textbf{fn}: ho preferito mantenere con \textbf{fn} la funzione del nodo (es. \textit{f(f(a))}) e con \textbf{sym}
+il simbolo del nodo (\textit{f}).
+
 \section{Il solutore}
 Il solutore consiste in una classe, \texttt{Graph.py}, contenente i metodi necessari all'implementazione
 della chiusura di congruenza. Questa classe è definita dai seguenti attributi:
@@ -27,6 +27,10 @@ della chiusura di congruenza. Questa classe è definita dai seguenti attributi:
                                                         il loro indice
     \item \texttt{List<int>} \textbf{not\_in\_same\_set}: lista proibita, utilizzata per rendere più efficiente il programma
 \end{itemize}
+Oltre questi attributi, ne sono presenti altri tre utilizzati come supporto: \textbf{output}, una stringa utilizzata per
+capire quando interrompere l'esecuzione (modificata dal controllo sulla \textit{lista proibita}) e \textbf{DETAILS} e
+\textbf{PLOT}, parametri per stampare rispettivamente i dettagli dell'esecuzione e i grafici (inseriti a questo livello
+per un problema di dipendenze circolari col Main).
 I metodi presenti nella classe sono quelli per effettuare la chiusura di congruenza:
 \begin{center}
     \label{tab:methods}
@@ -50,10 +54,16 @@ I metodi presenti nella classe sono quelli per effettuare la chiusura di congrue
 \end{center}
 
 \section{Euristiche applicate}
-Tra le euristiche viste a lezione, ho scelto di implementare la \textit{forbidden list}; questa particolare euristica permette
+Tra le euristiche viste a lezione, ho scelto di implementare la \textit{forbidden list}: questa particolare euristica permette
 di far terminare il programma prima dell'esecuzione di tutte le clausole nel caso in cui gli elementi della lista proibita
-siano nella stessa classe di congruenza (abbiano quindi lo stesso campo find). Questo controllo viene effettuato dopo ogni
-iterazione dell'algoritmo. Un'altra euristica considerata consisteva nell'aggiornamento del campo \textit{find} di tutti gli
-elementi appartenenti all'insieme durante l'unione; questa variante è stata scartata in quanto non portava particolari
-benefici in termini di tempo anzi, mediamente, allungava l'esecuzione.
+siano nella stessa classe di congruenza (abbiano quindi lo stesso campo \textbf{find}). Il controllo viene effettuato dopo ogni
+iterazione dell'algoritmo. Un'altra euristica implementata (e poi rimossa) consisteva nell'\textit{aggiornamento ricorsivo del campo
+find} di tutti gli elementi appartenenti all'insieme durante l'unione; questa variante è stata scartata in
+quanto invece di ridurre il tempo di esecuzione, lo aumentava. La terza euristica applicata consiste nella \textit{scelta
+non casuale del nodo rappresentante}: quando viene eseguita una \textbf{union} tra due nodi, il programma si preoccupa di contare
+tutti i nodi del grafo che hanno come rappresentante di classe uno dei due \textbf{id} coinvolti. Una volta trovato, quello con
+più ocorrenze diventa il rappresentante dell'altro. Questa euristica, nonostante non abbia praticamente modificato
+le prestazioni (il rallentamento conseguitone è veramente minimo), è stata mantenuta perchè aiuta ad orientarsi meglio nel
+flusso delle stampe: vedere spesso lo stesso \textbf{id} come referente della classe di congruenza mi è stato molto
+d'aiuto, soprattutto in fase di debug.
 

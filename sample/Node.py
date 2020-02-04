@@ -4,7 +4,6 @@ class Node:
 
     def __init__(self, fn, id):
         self.id = id
-        # instance the attributes
         self.fn = fn
         self.sym = self.setSym()
         self.args = set()

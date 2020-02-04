@@ -3,3 +3,27 @@
 %! TEX encoding = UTF-8
 %! TEX root = main.tex
 \chapter{Tests}
+Vengono inseriti ora i risultati dei test. I dati ottenuti qui sono relativi ad un PC dotato di Ryzen 5 2500. Il tempo
+ottenuto comprende il parsing e l'esecuzione dell'algoritmo di congruenza. I test che non hanno una citazione in bibliografia,
+sono stati creati per testare il progetto in alcuni casi particolari.
+\begin{center}
+    \begin{tabular}{|m{8cm}|m{2cm}|}
+        \hline
+        \textbf{Clausola} & \textbf{Tempo totale (s)} \\ \hline
+         f(a,b)=a; f(f(a,b),b)!=a \cite{bradleymanna}& $2.4\times10^{-4}$ \\ \hline
+         f(g(a))=g(f(a)); f(g(f(b)))=a; f(b)=a; g(f(a))!=a; \cite{bradleymanna} & $3.8\times10^{-4}$ \\ \hline
+         f(f(f(a)))=f(f(a)); f(f(f(f(a))))=a; f(a)!=a;  \cite{bonacina_2}& $3.4\times10^{-4}$ \\ \hline
+         f(x,y)=f(y,x); f(a,y)!=f(y,a); \cite{bradleymanna} & $1.7\times10^{-4}$ \\ \hline
+         f(g(x))=g(f(x)); f(g(f(y)))=x; f(y)=x; g(f(x))!=x; \cite{bradleymanna} & $3.5\times10^{-4}$ \\ \hline
+         f(f(f(a)))=f(a); f(f(a))=a; f(a)!=a; \cite{bradleymanna} & $1.4\times10^{-4}$ \\ \hline
+         f(x)=f(y); f(f(x))=f(x); f(f(y))!=f(f(x));  & $1.8\times10^{-4}$ \\ \hline
+         !atom(x);  !atom(y);  car(x)=car(y);  cdr(x)=cdr(y);  f(x)!=f(y); \cite{bradleymanna} & $1.3\times10^{-3}$ \\ \hline
+         f(b)=b; f(f(b))!=car(cons(f(b),d));  & $3.2\times10^{-4}$ \\ \hline
+         f(b)=b; f(f(b))!=car(cdr(cons(f(b),cons(b,d)))); \cite{bonacina} & $6.9\times10^{-4}$ \\ \hline
+         i1=j; i2!=i1; select(a,j)=v1; select(store(store(a,i1,v1),i2,v2),j)!=select(a,j); \cite{bradleymanna}& $1.2\times10^{-3}$ \\ \hline
+         y=car(x);z=cdr(x);x!=cons(y,z);\cite{bradleymanna} & $3.7 \times10^{-4}$  \\ \hline
+         !atom(x); car(x)=y; cdr(x)=z; x!=cons(y,z);\cite{bradleymanna}  & $1.4\times10^{-4}$  \\ \hline
+         select(store(a, i, e), j)=e; i!=j; \cite{bradleymanna} & $2.0 \times 10^{-4}$ \\ \hline
+         select(store(store(a, j, f), i, e), k)=g; j!=k; i=j; select(a, k)!=g; \cite{bradleymanna} & $4.6\times10^{-4}$ \\ \hline
+    \end{tabular}
+\end{center}

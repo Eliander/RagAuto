@@ -9,3 +9,7 @@ f(x) = f(y); f(f(x)) = f(x); f(f(y)) != f(f(x)); #Insoddisfacibile
 f(b) = b; f(f(b)) != car(cons(f(b), d)); #Insoddisfacibile
 f(b) = b; f(f(b)) != car(cdr(cons(f(b), cons(b,d)))); #Insoddisfacibile
 i1 = j; i2 != i1; select(a, j) = v1; select(store(store(a, i1, v1), i2, v2), j) != select(a, j); #Insoddisfacibile
+y=car(x);z=cdr(x);x!=cons(y,z); #Soddisfacibile
+!atom(x);y=car(x);z=cdr(x);x!=cons(y,z); #Insoddisfacibile
+select(store(a, i, e), j)=e; i!=j; #Soddisfacibile
+select(store(store(a, j, f), i, e), k)=g; j!=k; i=j; select(a, k)!=g; #Insoddisfacibile

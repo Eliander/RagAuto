@@ -28,8 +28,18 @@ class Graph:
             return self.find(node.get_find())
 
     def union_cc(self, id_1, id_2):
-        node_1 = self.DAG[self.find(id_1)]
-        node_2 = self.DAG[self.find(id_2)]
+        count_1, count_2 = 0, 0
+        for node in self.DAG:
+            if self.find(node) == id_1:
+                count_1 += 1
+            if self.find(node) == id_2:
+                count_2 += 1
+        if count_2 >= count_1:
+            node_1 = self.DAG[self.find(id_1)]
+            node_2 = self.DAG[self.find(id_2)]
+        else:
+            node_1 = self.DAG[self.find(id_2)]
+            node_2 = self.DAG[self.find(id_1)]
         if self.DETAILS:
             print('UNION({0}, {1}) \n'.format(node_1.get_fn(), node_2.get_fn()))
         node_1.set_find(node_2.get_find())

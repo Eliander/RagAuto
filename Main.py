@@ -1,10 +1,7 @@
 from sample.Graph import Graph
 import sample.InputParser as ccParser
 import argparse
-
-
-# formula = 'i1 = j; i2 != i1; select(a, j) = v1; select(store(store(a, i1, v1), i2, v2), j) != select(a, j)'
-# formula = "!atom(x); !atom(y); car(x) = car(y); cdr(x) = cdr(y); f(x) != f(y);"
+import time
 
 
 def main(clauses, det, plt):
@@ -20,9 +17,11 @@ def read_inputs(det, plt):
     for line in lines:
         li = line.split('#')
         print("{0}: {1}".format(count, li[0].strip()))
+        start_time = time.time()
         terms, fn_to_index, new_formula = ccParser.extract_terms(li[0])
         count += 1
         launch_cc(terms, fn_to_index, new_formula, det, plt)
+        print("--- %s seconds ---" % (time.time() - start_time))
         print('Expected: {0}'.format(li[1]))
         print('----------------------------------------------------')
 

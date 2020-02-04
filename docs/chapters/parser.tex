@@ -1,0 +1,25 @@
+%! Author = eliander
+%! Date = 24/01/20
+%! TEX encoding = UTF-8
+%! TEX root = main.tex
+\chapter{Il parser}
+\section{Breve analisi}
+Il progetto, fin dall'inizio, è stato strutturato in due parti: il solutore ed il parser. Il solutore ha il compito di
+eseguire l'algoritmo di chiusura di congruenza mentre il parser si occupa della fase di preprocessing dell'input e della creazione
+dei nodi. Nonostante il parser non sia la parte principale del progetto, trovo doveroso spendere alcune parole al riguardo.
+\section{Preprocessing per le teorie di liste e array}
+La classe \texttt{InputParser.py} si occupa del preprocessing dell'input: per poter applicare l'algoritmo di congruence
+closure anche alle liste ed agli array, infatti, è necessario aggiungere o rimuovere equazioni a seconda dei termini presenti.
+Se la formula da analizzare contiene un termine \textit{!atom(x)}, è necessario sostituirlo con un termine
+\textit{cons($x_u$, $x_v$) = x}. Per implementare il \textbf{merge} relativo al \textit{cons}, il parser aggiunge due equazioni
+\textit{$x_u$ = car(cons($x_u$, $x_v$))} e \textit{$x_v$ = cdr(cons($x_u$, $x_v$))}. Altro caso si verifica quando l'equazione
+analizzata contiene \textit{store} o \textit{select}; se per la select basta una normale sostituzione (es. da \textit{select(a, j)}
+a \textit{$f_a$(j)}), per la store le cose sono più complicate: il parser effettua una analisi dei casi, andando a generare
+tutte le possibili varianti di indici e valori. Questo particolare punto mi ha costretto a cambiare in corso d'opera
+la struttura stessa del parser: l'input che arrivava era sempre una stringa ma gli insiemi di clausole a cui applicare la
+chiusura di congruenza diventavano più d'uno.
+\section{Cenni sul parsing}
+L'idea alla base consiste nell'analizzare le stringe mediante il conteggio delle \textit{parentesi}: valutando le aperture
+e le chiusure, l'algoritmo estrae i termini più esterni; fatto ciò, se sono presenti altre parentesi, ricorsivamente esplora
+i \textit{sottotermini}. Infine ottiene i \textit{termini singoli} (tra parentesi e non). I nodi creati in questo modo
+vengono passati al solutore che deve preoccuparsi solamente di eseguire la chiusura di congruenza tra gli elementi.

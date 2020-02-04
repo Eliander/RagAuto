@@ -10,9 +10,6 @@ Attributi:
     terms_array [](String): lista di termini utilizzati nella teoria degli array
 
 Todo:
-    * se ho più negazioni nella formula? gestire lista di liste proibita
-    * find con id che ha più elementi nel ccpar
-    * rendere possibile passare il path di un file di input
     * far accettare nel file di input True e False al posto di Soddisfacibile ed Insoddisfacibile
 """
 import itertools
@@ -128,11 +125,11 @@ def extract_terms(text):
             new_car = '{0} = car(cons({1}, {2}));'.format(var+'u', var+'u', var+'v')
             new_cdr = '{0} = cdr(cons({1}, {2}));'.format(var + 'v', var + 'u', var + 'v')
             # rimuovo il vecchio elemento e aggiungo i due nuovi
-            equations[i] = 'cons({0}, {1})'.format(var+'u', var+'v')
+            equations[i] = 'cons({0}, {1});'.format(var+'u', var+'v')
             # equations.append(var)
             equations[i] = equations[i].replace('!atom({0})'.format(var), new_eq)
-            equations.append('car(cons({1}, {2}))'.format(var+'u', var+'u', var+'v'))
-            equations.append('cdr(cons({1}, {2}))'.format(var + 'v', var + 'u', var + 'v'))
+            equations.append('car(cons({1}, {2}));'.format(var+'u', var+'u', var+'v'))
+            equations.append('cdr(cons({1}, {2}));'.format(var + 'v', var + 'u', var + 'v'))
             # sostituisco anche nella string di ritorno con la formula completa
             copy_of_text = copy_of_text.replace('!atom({0})'.format(var), new_eq)
             copy_of_text = copy_of_text + new_car + new_cdr
@@ -173,8 +170,8 @@ def extract_terms(text):
                         break
                 cdr = cdr[:j]
                 # aggiungo car e cdr al testo
-                copy_of_text += car + '=' + 'car(' + cons + ');'
-                copy_of_text += cdr + '=' + 'cdr(' + cons + ');'
+                copy_of_text += ';' + car + '=' + 'car(' + cons + ');'
+                copy_of_text += ';' + cdr + '=' + 'cdr(' + cons + ');'
         # se è una store con una select applico r-o-w-1 e r-o-w-2, se è una select la sostituisco con un nuovo termine
         if "store" in equations[i]:
             res = []
